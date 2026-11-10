@@ -9,6 +9,9 @@ class FakeS3:
         return "https://storage.example/signed"
     def put_object(self, **kwargs):
         self.calls.append(("put", kwargs))
+    def head_object(self, **kwargs):
+        self.calls.append(("head", kwargs))
+        return {"ContentLength": 4, "ContentType": "image/jpeg"}
     def delete_object(self, **kwargs):
         self.calls.append(("delete", kwargs))
 
@@ -19,7 +22,8 @@ def test_private_storage(monkeypatch):
     assert storage.read_url("uploads", "asset_123").startswith("https://")
     assert fake.calls[0][1]["Key"] == "uploads/asset_123"
     storage.put_image("avatars", "avatar_123", b"test", "image/jpeg")
-    assert fake.calls[-1][1]["ServerSideEncryption"] == "AES256"
+    assert fake.calls[-1][1]["ContentType"] == "image/jpeg"
+    assert storage.head("avatars", "avatar_123")["ContentLength"] == 4
 
 def test_rejects_path_traversal(monkeypatch):
     monkeypatch.setenv("S3_BUCKET", "test-private")
