@@ -1,7 +1,6 @@
 """S3-compatible private storage. Never accept arbitrary remote URLs from clients."""
 import os
 import re
-from urllib.parse import urlparse
 
 import boto3
 from botocore.config import Config
@@ -14,11 +13,11 @@ class StorageError(RuntimeError):
 
 class PrivateStorage:
     def __init__(self, client=None):
-        self.bucket = os.getenv("S3_BUCKET", "")
+        self.bucket = os.getenv("S3_BUCKET", "dressify-ai")
         self.client = client or boto3.client(
             "s3", endpoint_url=os.getenv("S3_ENDPOINT_URL") or None,
-            region_name=os.getenv("S3_REGION", "auto"),
-            config=Config(signature_version="s3v4"))
+            region_name=os.getenv("S3_REGION", "us-east-1"),
+            config=Config(signature_version="s3v4", s3={"addressing_style": "path"}))
         if not self.bucket:
             raise StorageError("S3_BUCKET must be configured")
 
@@ -52,8 +51,10 @@ class PrivateStorage:
         if len(image) > 10 * 1024 * 1024:
             raise StorageError("Image too large")
         self.client.put_object(Bucket=self.bucket, Key=self.key(kind, asset_id),
-                               Body=image, ContentType=content_type,
-                               ServerSideEncryption="AES256")
+                               Body=image, ContentType=content_type)
+
+    def head(self, kind: str, asset_id: str) -> dict:
+        return self.client.head_object(Bucket=self.bucket, Key=self.key(kind, asset_id))
 
     def delete(self, kind: str, asset_id: str) -> None:
         self.client.delete_object(Bucket=self.bucket, Key=self.key(kind, asset_id))
