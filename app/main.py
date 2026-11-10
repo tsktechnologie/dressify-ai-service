@@ -43,3 +43,6 @@ def get_job(job_id: str, authorization: str | None = Header(default=None)):
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+from app.upload_routes import router as upload_router
+app.include_router(upload_router)
