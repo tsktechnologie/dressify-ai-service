@@ -22,4 +22,4 @@ Internal endpoints require `Authorization: Bearer <INTERNAL_API_TOKEN>`:
 
 `GET /health` is public.
 
-**Prototype only:** jobs are stored in process memory and remain queued. No actual AI images are generated. Before production: add persistent storage, queue workers, signed assets, rate limits, provider integration, and deletion flows.
+**Development only:** run `python -m app.worker` separately with the same `JOB_DB_PATH`. Go must validate user ownership, consent, and uploads before creating internal jobs. See `docs/go-integration.md` and `docs/storage.md`. SQLite lacks crash recovery and production idempotency; do not deploy publicly.
