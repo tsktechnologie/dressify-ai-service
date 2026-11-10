@@ -27,5 +27,5 @@ def test_multipart_avatar_upload(tmp_path, monkeypatch):
     assert saved[0][0] == "uploads"
 
 def test_upload_requires_auth():
-    response = TestClient(app).post("/internal/avatars/upload")
+    response = TestClient(app).post("/internal/avatars/upload", files={"image": ("x.jpg", b"x", "image/jpeg")}, data={"consent_version": "v1"})
     assert response.status_code == 401
