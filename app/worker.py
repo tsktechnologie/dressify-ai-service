@@ -67,14 +67,21 @@ def process_one():
     job_id = claim_next()
     if job_id is None:
         return False
+    job = get_job(job_id)
     try:
-        result = asyncio.run(execute_job(get_job(job_id)))
+        result = asyncio.run(execute_job(job))
         finish(job_id, "succeeded", result=result)
     except ProcessingError as exc:
         finish(job_id, "failed", error_code=exc.code)
     except Exception:
         log.exception("Processing failed for job %s", job_id)
         finish(job_id, "failed", error_code="PROCESSING_FAILED")
+    finally:
+        if job["type"] == "avatar" and job["inputs"].get("temporary_source"):
+            try:
+                PrivateStorage().delete("uploads", job["inputs"]["image_asset_id"])
+            except Exception:
+                log.exception("Temporary upload cleanup failed for job %s; manual cleanup required", job_id)
     return True
 
 def main():
