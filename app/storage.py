@@ -43,6 +43,14 @@ class PrivateStorage:
             "get_object", Params={"Bucket": self.bucket, "Key": self.key(kind, asset_id)},
             ExpiresIn=expires)
 
+    def put_source(self, kind: str, asset_id: str, image: bytes, content_type: str) -> None:
+        if kind not in {"uploads", "garments"}:
+            raise StorageError("Invalid source kind")
+        if content_type not in {"image/jpeg", "image/png", "image/webp"} or not image or len(image) > 10 * 1024 * 1024:
+            raise StorageError("Invalid source image")
+        self.client.put_object(Bucket=self.bucket, Key=self.key(kind, asset_id),
+                               Body=image, ContentType=content_type)
+
     def put_image(self, kind: str, asset_id: str, image: bytes, content_type: str) -> None:
         if kind not in {"avatars", "tryons"}:
             raise StorageError("Output kind required")
